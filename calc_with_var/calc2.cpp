@@ -7,6 +7,7 @@ const string result = "= ";
 double statement(Token_stream& ts);
 double expression(Token_stream& ts);
 double term(Token_stream& ts);
+double expon(Token_stream& ts);
 double primary(Token_stream& ts);
 
 Token_stream ts;
@@ -78,17 +79,17 @@ double primary(Token_stream& ts){
 }
 double term(Token_stream& ts)
 {
-    double left = primary(ts);
+    double left =expon(ts);
     Token t = ts.get();
     while(true) {
         switch (t.kind) {
             case '*':
-                left *= primary(ts);
+                left *= expon(ts);
                 t = ts.get();
                 break;
             case '/':
             {
-                double d = primary(ts);
+                double d = expon(ts);
                 if (d == 0) error("divide by zero");
                 left /= d;
                 t = ts.get();
@@ -96,7 +97,7 @@ double term(Token_stream& ts)
             }
             case '%':
             {
-                double d = primary(ts);
+                double d = expon(ts);
                 if (d == 0) error("divide by zero");
                 left = fmod(left, d);
                 t = ts.get();
@@ -109,6 +110,21 @@ double term(Token_stream& ts)
     }
     
 }
+
+double expon(Token_stream& ts)
+{
+    double left = primary(ts);
+    Token t = ts.get();
+    if(t.kind == power) {
+        double d = primary(ts);
+        return pow(left, d);
+    }
+    else {
+        ts.putback(t);
+        return left;
+    }
+}
+
 double expression(Token_stream& ts){
     double left = term(ts);
     Token t = ts.get();
@@ -145,7 +161,7 @@ void calculate(Token_stream& ts)
                 return;
             }
             ts.putback(t);
-            cout << result << statement(ts) << '\n';
+            cout << setprecision(10) << result << statement(ts) << '\n';
         }catch(exception& e) {
             cerr << e.what() << '\n';
             clean_up_mess();
